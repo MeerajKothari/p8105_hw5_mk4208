@@ -7,6 +7,7 @@ output: github_document
 
 ```{r}
 library(tidyverse)
+library(viridis)
 ```
 
 
@@ -40,7 +41,55 @@ Problem 2
 files = list.files("./data/", pattern = ".csv", full.names = TRUE)
 
 files_df = files %>% 
-  map(read_csv) %>% 
-  reduce(rbind)
+  map_df(read_csv) %>% 
+  mutate(filename = tools::file_path_sans_ext(basename(files))) %>%
+  separate(filename, into = c("arm", "id"), convert = TRUE) %>% 
+  mutate(id = row_number()) %>%
+  select(id, arm, everything()) %>%
+  pivot_longer(week_1:week_8,
+    names_to = "week",
+    values_to = "value",
+    names_prefix = "week_"
+  ) 
+
+files_df %>% 
+  ggplot(aes(x = week, y = value, color = arm, group = id)) +
+  geom_line() + 
+  theme_minimal() 
+```
+
+Problem 3 
+
+```{r}
+sim_regression = function(beta1 = 0) {
+  
+  sim_data = tibble(
+    x = rnorm(30, mean = 0, sd = 1),
+    y = 2 + beta1 * x + rnorm(30, 0, sd = 50^1/2)
+  )
+  
+  ls_fit = lm(y ~ x, data = sim_data)
+  
+  tibble(
+    beta1_hat = broom::tidy(ls_fit)[2, 2] %>% as.numeric(),
+    p_value = broom::tidy(ls_fit)[2, 5] %>% as.numeric()
+  )
+}
+```
+
+```{r}
+beta1_list = list(beta1_1 = 1,
+                 beta1_2 = 2,
+                 beta1_3 = 3,
+                 beta1_4 = 4,
+                 beta1_5 = 5,
+                 beta1_6 = 6)
+
+output = vector("list", length = 6) 
+
+for (i in 1:6) { 
+  output[[i]] = rerun(10000, sim_regression(beta_list[[i]])) %>%
+    bind_rows
+  }
 ```
 
