@@ -12,6 +12,7 @@ library(devtools)
 library(patchwork)
 ```
 
+# Loading Libraries
 
 ```{r}
 library(tidyverse)
@@ -83,7 +84,7 @@ sim_regression = function(beta1 = 0) {
 
 ```{r}
 sim_results = tibble(beta_1 = c(0, 1, 2, 3, 4, 5, 6)) %>% 
-  mutate(output_lists = map(.x = beta_1, ~rerun(10000, sim_regression(beta1 = .x))),
+  mutate(output_lists = map(.x = beta_1, ~rerun(10, sim_regression(beta1 = .x))),
          estimate_dfs = map(output_lists, bind_rows)) %>%
   select(-output_lists) %>%
   unnest(estimate_dfs)
