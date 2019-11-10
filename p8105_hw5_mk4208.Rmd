@@ -125,7 +125,7 @@ The following code chunk generates 10000 datasets using the `sim_regression` fun
 
 ```{r}
 sim_results = tibble(beta_1 = c(0, 1, 2, 3, 4, 5, 6)) %>% 
-  mutate(output_lists = map(.x = beta_1, ~rerun(10, sim_regression(beta1 = .x))),
+  mutate(output_lists = map(.x = beta_1, ~rerun(10000, sim_regression(beta1 = .x))),
          estimate_dfs = map(output_lists, bind_rows)) %>%
   select(-output_lists) %>%
   unnest(estimate_dfs)
@@ -149,9 +149,9 @@ sim_results %>%
   theme_minimal()
 ```
 
-The following plots shows the average estimate of β1 estimate on the y-axis and the true value of β1 on the x-axis. The second plot shows the average estimate of β1 estimate **only in samples for which the null was rejected** on the y-axis and the true value of β1 on the x-axis. 
+The following plots shows the average estimate of β1 on the y-axis and the true value of β1 on the x-axis. The second plot shows the average estimate of β1 **only in samples for which the null was rejected** on the y-axis and the true value of β1 on the x-axis. 
 
-Based on this, we can see that the sample average of β1 estimate across the tests for which the null is rejected is not equal to the true value of β1. This is because as the effect size increases, power also increase. Hence, we can see that the sample beta deviates from the true beta among the samples for which the null was rejected.  
+Based on this, we can see that the average estimate of β1 across the tests for which the null is rejected is not equal to the true value of β1. The β1 estimate is higher for true β1 values that are smaller and the difference between the β1 estimate and the true β1 value decreases as the true β1 values increase. This is because for the same n and alpha value, as the effect size increases the power also increases hence we can see that for β1 = 6, the difference between the β1 estimate and the true value is relatively small compared to smaller effect sizes. 
  
 ```{r}
 p1 = sim_results %>% 
