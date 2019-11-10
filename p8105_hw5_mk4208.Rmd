@@ -97,9 +97,13 @@ The following code chunk writes a function `sim_regression` with the following d
 
 The function takes the argument `beta1`. 
 
-* By default, the function sets $\beta_1$ = 0 and generates a dataset from the model $y_i = \beta_0 + \beta_1x_{i1} + \epsilon_i$ with $\epsilon_i \sim N[0, \sigma^2]$.
+* By default, the function sets $\beta_1$ = 0 and generates a dataset from the model $y_i = \beta_0 + \beta_1x_{i1} + \epsilon_i$ with $\epsilon_i \sim N[0, \sigma^2]$. 
+
+Additionally, it saves the $\hat\beta_1$ and the p-value arising from a test of $H: \beta_1 = 0$ using $\alpha = 0.05$.
 
 ```{r}
+set.seed(10)
+
 sim_regression = function(beta1 = 0) {
   
   sim_data = tibble(
@@ -117,7 +121,7 @@ sim_regression = function(beta1 = 0) {
 }
 ```
 
-
+The following code chunk generates 10000 datasets using the `sim_regression` function for $\beta_1 = \{0, 1, 2, 3, 4, 5, 6\}$.
 
 ```{r}
 sim_results = tibble(beta_1 = c(0, 1, 2, 3, 4, 5, 6)) %>% 
@@ -127,6 +131,10 @@ sim_results = tibble(beta_1 = c(0, 1, 2, 3, 4, 5, 6)) %>%
   unnest(estimate_dfs)
 ```
 
+The following plot shows the proportion of times the null was rejected on the y-axis and the true value of beta 1 on the x-axis. 
+
+The association between the two show us that as the effect size increases, the power also increases, when the sample size and alpha remain constant. 
+
 ```{r}
 sim_results %>% 
   group_by(beta_1) %>%
@@ -135,16 +143,26 @@ sim_results %>%
   filter(reject == TRUE) %>%
   ggplot(aes(x = beta_1, y = percent)) +
   geom_point() + 
-  geom_line()
+  geom_line() + 
+  xlab("True value of Beta 1") +
+  ylab("Proportion of times the null was rejected") +
+  theme_minimal()
 ```
 
+The following plots shows the average estimate of $\hat\beta_1$ on the y-axis and the true value of $\beta_1$ on the x-axis. The second plot shows the average estimate of $\hat\beta_1$ **only in samples for which the null was rejected** on the y-axis and the true value of $\beta_1$ on the x-axis. 
+
+Based on this, we can see that the sample average of $\hat\beta_1$ across the tests for which the null is rejected is not equal to the true value of $\beta_1$. This is because as the effect size increases, power also increase. Hence, we can see that the sample beta deviates from the true beta among the samples for which the null was rejected.  
+ 
 ```{r}
 p1 = sim_results %>% 
   group_by(beta_1) %>%
   summarise(mean = mean(beta1_hat)) %>% 
   ggplot(aes(x = beta_1, y = mean)) + 
   geom_point() + 
-  geom_line()
+  geom_line() + 
+  xlab("True value of Beta 1") + 
+  ylab("Average estimate of Beta1 hat") +
+  theme_minimal()
 
 p2 = sim_results %>% 
   filter(p_value < 0.05) %>% 
@@ -152,7 +170,10 @@ p2 = sim_results %>%
   summarise(mean = mean(beta1_hat)) %>% 
   ggplot(aes(x = beta_1, y = mean)) + 
   geom_point() +
-  geom_line()
+  geom_line() +
+  xlab("True value of Beta 1") + 
+  ylab("Average estimate of Beta1 hat\nin samples for which null was rejected") + 
+  theme_minimal()
 
 p1 + p2
 ```
