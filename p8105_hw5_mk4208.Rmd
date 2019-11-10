@@ -5,16 +5,20 @@ date: "11/6/2019"
 output: github_document
 ---
 
-```{r}
+# Loading Libraries
+
+```{r message=FALSE}
 library(tidyverse)
 library(viridis)
 library(devtools)
 library(patchwork)
 ```
 
-# Loading Libraries
+# Problem 1
 
-```{r}
+The code chunk below loads the `iris` dataset from the `tidyverse` package and introduces some missing values in each column. The purpose of this problem is to fill in those missing values.
+
+```{r message=FALSE}
 library(tidyverse)
 
 set.seed(10)
@@ -24,9 +28,9 @@ iris_with_missing = iris %>%
   mutate(Species = as.character(Species))
 ```
 
-Problem 1
+The following function that a vector as an argument; replaces missing values using the rules defined above; and returns the resulting vector.
 
-```{r}
+```{r message=FALSE}
 fill_missing = function(x) {
   if (is.numeric(x)) {
     replace_na(x, mean(x, na.rm = TRUE))
@@ -34,15 +38,25 @@ fill_missing = function(x) {
     replace_na(x, "virginica")
   }
 }
+```
 
+The following code chunk applies the `fill_missing` function to the columns of `iris_with_missing` using a `map` statment. 
+
+```{r message=FALSE}
 iris_filled = map_df(iris_with_missing, fill_missing)
 ```
 
-Problem 2 
+# Problem 2 
 
-```{r}
-files = list.files("./data/", pattern = ".csv", full.names = TRUE)
+The following code chunk creates a dataframe containing all the file names within the zip folder using the `list.files` function.
 
+```{r message=FALSE}
+files = list.files("./data/", pattern = ".csv", full.names = TRUE) 
+```
+
+The following code chunk iterates over file names and reads in data for each subject using `purrr::map`, saves the result as a new variable in the dataframe and tidies the result by manipulating files names to include control arm and subject ID
+
+```{r message=FALSE}
 files_df = files %>% 
   map_df(read_csv) %>% 
   mutate(filename = tools::file_path_sans_ext(basename(files))) %>%
@@ -53,15 +67,26 @@ files_df = files %>%
     names_to = "week",
     values_to = "value",
     names_prefix = "week_"
-  ) 
+  ) %>% 
+  mutate(arm = recode(arm, "con" = "Control", "exp" = "Experimental"))
+```
 
+The following code chunk maes a spaghetti plot showing observations on each subject over time. 
+
+```{r}
 files_df %>% 
   ggplot(aes(x = week, y = value, color = arm, group = id)) +
   geom_line() + 
-  theme_minimal() 
+  theme_minimal() + 
+  xlab("Week") +
+  ylab("Observations") +
+  ggtitle("Observations on each subject over time") +
+  theme(legend.position = "bottom") 
 ```
 
-Problem 3 
+Based on the above create plot, we can see that the observations for the experimental arm increase over time on average compared to the observations for the control arm. 
+
+# Problem 3 
 
 ```{r}
 sim_regression = function(beta1 = 0) {
